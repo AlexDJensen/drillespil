@@ -35,3 +35,12 @@ class Board:
 
     def rotate_next(self, spot_to_rotate, rotation):
         pass
+
+
+forklaring = """
+I brødtekst:
+Lav en liste af alle kombinationer af brikker.
+Lav en liste af alle rotationer af hver brik.
+Tag en kombination af brikker, og lav rotationerne til træ.
+Tjek første kant - hvis den er god, så
+"""
