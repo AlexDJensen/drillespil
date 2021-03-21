@@ -114,6 +114,15 @@ func edgePairs(e edges) (p []edgePair) {
 	return p
 }
 
+// Match checks if edgepair is valid, returns bool
+func Match(e edgePair) bool {
+	if e.e1 == e.e2 {
+		return true
+	}
+	return false
+
+}
+
 /*
 Rotate takes a token and an optional rotation,
 and returns the corresponding colour-half pair in the board-edges for that rotation.
@@ -200,10 +209,10 @@ func HeapPermutation(a []int, size int) {
 }
 
 /*
-Permutations create permutations in a list.
+PermutationsWithoutRepetition create permutations in a list.
 As arguments, it takes an array of integers and a length argument, and returns an array of arrays of integers
 */
-func Permutations(L []int, r int) [][]int {
+func PermutationsWithoutRepetition(L []int, r int) [][]int {
 	if r == 1 {
 		//Convert every item in L to List and
 		//Append it to List of List
@@ -222,7 +231,7 @@ func Permutations(L []int, r int) [][]int {
 		perms = append(perms, L[:i]...)
 		perms = append(perms, L[i+1:]...)
 		//Call recursively to Permutations
-		for _, x := range Permutations(perms, r-1) {
+		for _, x := range PermutationsWithoutRepetition(perms, r-1) {
 			t := append(x, L[i])
 			res = append(res, [][]int{t}...)
 		}
@@ -231,24 +240,17 @@ func Permutations(L []int, r int) [][]int {
 
 }
 
-func combinations(min int, max int) (out []int) {
-	for i := min; i < max; i++ {
-		out = append(out, i)
-	}
-	return out
-}
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	start := time.Now()
 
 	a := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	res := Permutations(a, len(a))
+	//b := [9]int{0, 0, 0, 0, 0, 0, 0, 0, 0}
+	res := PermutationsWithoutRepetition(a, len(a))
 	fmt.Println(len(res))
-	combs := combinations(1, 99999999)
 
-	fmt.Println(combs[len(combs)-8])
+	fmt.Printf("%+v\n", res[len(res)-2])
 
 	elapsed := time.Since(start)
 	fmt.Printf("Took %s\n", elapsed)
