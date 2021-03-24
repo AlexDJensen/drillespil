@@ -41,10 +41,10 @@ func nextProduct(values []int, length int) func() []int {
 }
 
 /*
-Permutations creates a list of lists, each list being a permutation.
+RepeatingPermutations creates a list of lists, each list being a permutation.
 */
-func Permutations(values []int) (permuts [][]int) {
-	np := nextProduct(values, BoardSize)
+func RepeatingPermutations(values []int, length int) (permuts [][]int) {
+	np := nextProduct(values, length)
 	permuts = make([][]int, 0)
 
 	for {
@@ -61,11 +61,56 @@ func Permutations(values []int) (permuts [][]int) {
 	return permuts
 }
 
+/*
+Permutations takes a length argument and outputs a list of all integer Permutations (non-repeating)
+*/
+func Permutations(input []int) (result [][]int) {
+	var helper func([]int, int)
+	result = [][]int{}
+
+	helper = func(arr []int, n int) {
+		if n == 1 {
+			tmp := make([]int, len(arr))
+			copy(tmp, arr)
+			result = append(result, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				helper(arr, n-1)
+				if n%2 == 1 {
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	helper(input, len(input))
+	return result
+}
+
 //Set to 3 for now during testing, should be 9
-const BoardSize = 4
+const BoardSize = 9
 
 func main() {
-	val := []int{0, 1, 2, 3}
-	perms := Permutations(val)
-	fmt.Println(perms, len(perms))
+	rotation_values := []int{0, 1, 2, 3}
+	rotations := RepeatingPermutations(rotation_values, BoardSize)
+	if len(rotations) < 1000 {
+		fmt.Println(rotations, len(rotations))
+	} else {
+		fmt.Println(len(rotations))
+		fmt.Println(rotations[len(rotations)-5:])
+	}
+	board_values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	boards := Permutations(board_values)
+	if len(boards) < 1000 {
+		fmt.Println(boards, len(boards))
+	} else {
+		fmt.Println(len(boards))
+		fmt.Println(boards[len(boards)-5:])
+	}
+
 }
