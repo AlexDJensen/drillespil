@@ -49,21 +49,23 @@ func Permutations(values []int) (permuts [][]int) {
 
 	for {
 		product := np()
-		fmt.Println(product)
+
 		if len(product) == 0 {
 			break
 		}
-		permuts = append(permuts, product)
+		c := make([]int, BoardSize)
+		copy(c, product)
+		permuts = append(permuts, c)
 
 	}
 	return permuts
 }
 
 //Set to 3 for now during testing, should be 9
-const BoardSize = 3
+const BoardSize = 4
 
 func main() {
-	val := []int{0, 1}
+	val := []int{0, 1, 2, 3}
 	perms := Permutations(val)
 	fmt.Println(perms, len(perms))
 }
