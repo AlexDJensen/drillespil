@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 var colours = map[int]string{
@@ -92,8 +93,123 @@ func Permutations(input []int) (result [][]int) {
 	return result
 }
 
+// EqualSlices takes two int slices and compares them for equality
+func EqualSlices(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// removeRotations is going to remove rotations of a board placement
+// Unsure if this works
+func removeRotation(input *[][]int, to_delete *[]int) {
+	for i := 0; i < len(*input); i++ {
+		if EqualSlices((*input)[i], *to_delete) {
+			*input = append((*input)[:i], (*input)[i+1:]...)
+
+			i-- // Since we just deleted a[i], we must redo that index
+		}
+	}
+}
+
+func RemoveRotations(input *[][]int) *[][]int {
+	for _, value := range *input {
+		for i := 0; i < 4; i++ {
+			rotation := RotateBoard(value, i)
+			removeRotation(input, &rotation)
+		}
+	}
+	return input
+}
+
+func chunkSlice(slice []int, chunkSize int) [][]int {
+	var chunks [][]int
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+
+		// necessary check to avoid slicing beyond
+		// slice capacity
+		if end > len(slice) {
+			end = len(slice)
+		}
+
+		chunks = append(chunks, slice[i:end])
+	}
+
+	return chunks
+}
+
+func unchunkSlice(chunks [][]int) []int {
+	ret := make([]int, 0)
+
+	for _, elements := range chunks {
+		for _, v := range elements {
+			ret = append(ret, v)
+		}
+	}
+
+	return ret
+}
+
+// RotateBoard is a utility function - it iteratively calls rotateBoard to get correct rotation
+func RotateBoard(board []int, rotations int) []int {
+
+	if rotations == 0 {
+		return board
+	}
+
+	for i := 0; i < rotations; i++ {
+		board = rotateBoard(board)
+	}
+
+	return board
+}
+
+func rotateBoard(board []int) []int {
+	// Adapted from the python solution above
+	// https://stackoverflow.com/questions/42519/how-do-you-rotate-a-two-dimensional-array/35438327#35438327
+
+	rotated_board := make([]int, 0)
+
+	size := int(math.Floor(math.Sqrt(float64(len(board)))))
+	//Rotating layers below
+	layer_count := size / 2
+
+	split_board := chunkSlice(board, size)
+
+	for i := 0; i < layer_count; i++ {
+		first := i
+		last := size - first - 1
+
+		for j := first; j < last; j++ {
+			offset := j - first
+
+			top := split_board[first][j]
+			right_side := split_board[j][last]
+			bottom := split_board[last][last-offset]
+			left_side := split_board[last-offset][first]
+
+			split_board[first][j] = left_side
+			split_board[j][last] = top
+			split_board[last][last-offset] = right_side
+			split_board[last-offset][first] = bottom
+
+		}
+	}
+
+	rotated_board = unchunkSlice(split_board)
+
+	return rotated_board
+}
+
 //Set to 3 for now during testing, should be 9
-const BoardSize = 9
+const BoardSize = 4
 
 func main() {
 	rotation_values := []int{0, 1, 2, 3}
@@ -104,7 +220,8 @@ func main() {
 		fmt.Println(len(rotations))
 		fmt.Println(rotations[len(rotations)-5:])
 	}
-	board_values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	//board_values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	board_values := []int{1, 2, 3, 4}
 	boards := Permutations(board_values)
 	if len(boards) < 1000 {
 		fmt.Println(boards, len(boards))
@@ -112,5 +229,11 @@ func main() {
 		fmt.Println(len(boards))
 		fmt.Println(boards[len(boards)-5:])
 	}
+
+	fmt.Println(boards[0])
+	fmt.Println(RotateBoard(boards[0], 1))
+
+	clean_boards := RemoveRotations(&boards)
+	fmt.Println(len(*clean_boards))
 
 }
