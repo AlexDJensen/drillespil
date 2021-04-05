@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"os"
+	"path"
 )
 
 var colours = map[int]string{
@@ -120,9 +123,9 @@ func removeRotation(input *[][]int, to_delete *[]int) {
 
 func RemoveRotations(input *[][]int) *[][]int {
 	for _, value := range *input {
-		for i := 0; i < 4; i++ {
-			rotation := RotateBoard(value, i)
-			removeRotation(input, &rotation)
+		for i := 1; i < 4; i++ {
+			rotation := RotateBoard(&value, i)
+			removeRotation(input, rotation)
 		}
 	}
 	return input
@@ -158,7 +161,7 @@ func unchunkSlice(chunks [][]int) []int {
 }
 
 // RotateBoard is a utility function - it iteratively calls rotateBoard to get correct rotation
-func RotateBoard(board []int, rotations int) []int {
+func RotateBoard(board *[]int, rotations int) *[]int {
 
 	if rotations == 0 {
 		return board
@@ -171,17 +174,17 @@ func RotateBoard(board []int, rotations int) []int {
 	return board
 }
 
-func rotateBoard(board []int) []int {
+func rotateBoard(board *[]int) *[]int {
 	// Adapted from the python solution above
 	// https://stackoverflow.com/questions/42519/how-do-you-rotate-a-two-dimensional-array/35438327#35438327
 
 	rotated_board := make([]int, 0)
 
-	size := int(math.Floor(math.Sqrt(float64(len(board)))))
+	size := int(math.Floor(math.Sqrt(float64(len(*board)))))
 	//Rotating layers below
 	layer_count := size / 2
 
-	split_board := chunkSlice(board, size)
+	split_board := chunkSlice(*board, size)
 
 	for i := 0; i < layer_count; i++ {
 		first := i
@@ -205,11 +208,24 @@ func rotateBoard(board []int) []int {
 
 	rotated_board = unchunkSlice(split_board)
 
-	return rotated_board
+	return &rotated_board
+}
+
+func WriteBoards(filePath string, values *[][]int) error {
+	f, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	for _, value := range *values {
+		fmt.Fprintln(f, value)
+	}
+
+	return nil
 }
 
 //Set to 3 for now during testing, should be 9
-const BoardSize = 4
+const BoardSize = 9
 
 func main() {
 	rotation_values := []int{0, 1, 2, 3}
@@ -220,8 +236,8 @@ func main() {
 		fmt.Println(len(rotations))
 		fmt.Println(rotations[len(rotations)-5:])
 	}
-	//board_values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	board_values := []int{1, 2, 3, 4}
+	board_values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	//board_values := []int{1, 2, 3, 4, 5, 6, 7}
 	boards := Permutations(board_values)
 	if len(boards) < 1000 {
 		fmt.Println(boards, len(boards))
@@ -230,10 +246,24 @@ func main() {
 		fmt.Println(boards[len(boards)-5:])
 	}
 
-	fmt.Println(boards[0])
-	fmt.Println(RotateBoard(boards[0], 1))
+	base_path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(base_path)
+	err = WriteBoards(path.Join(base_path, "/cmd/drillespil/boards.txt"), &boards)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	clean_boards := RemoveRotations(&boards)
-	fmt.Println(len(*clean_boards))
+	// clean_boards := RemoveRotations(&boards)
+	// if len(*clean_boards) < 1000 {
+	// 	fmt.Println(clean_boards, len(*clean_boards))
+	// } else {
+	// 	fmt.Println(len(*clean_boards))
+	// 	fmt.Println((*clean_boards)[len(*clean_boards)-5:])
+	// }
+
+	// WriteBoards(path.Join(base_path, "/cmd/drillespil/clean_boards.txt"), clean_boards)
 
 }
