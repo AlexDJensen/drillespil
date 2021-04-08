@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"os"
-	"path"
 	"sort"
 )
 
@@ -131,14 +129,19 @@ func sortedKeys(m map[int][]int) []int {
 	return keys
 }
 
-// RemoveRotations converts input slice pointer to a map,
-// removes redundant rotations and returns a slice pointer.
-func RemoveRotations(input *[][]int) *[][]int {
-	// Create a map and populate
+func sliceToMap(input *[][]int) map[int][]int {
 	deleterMap := make(map[int][]int, 0)
 	for idx := range *input {
 		deleterMap[sliceToInt(&(*input)[idx])] = (*input)[idx]
 	}
+	return deleterMap
+}
+
+// RemoveRotations converts input slice pointer to a map,
+// removes redundant rotations and returns a slice pointer.
+func RemoveRotations(input *[][]int) *[][]int {
+	// Create a map and populate
+	deleterMap := sliceToMap(input)
 	//fmt.Println(len(deleterMap), deleterMap)
 
 	//Idea - generate rotations and add to slice, then go to a separate loop to delete them?
@@ -147,22 +150,26 @@ func RemoveRotations(input *[][]int) *[][]int {
 	//for _, val := range deleterMap {
 	map_keys := sortedKeys(deleterMap)
 	for _, k := range map_keys {
-		var deleteValues [][]int
+		var deleteValues []int
+		//fmt.Println(len(map_keys))
 
 		for i := 1; i < 4; i++ {
 			val := (deleterMap)[k]
 			deleteVal := RotateBoard(val, i)
 			deleteTmp := make([]int, BoardSize)
 			copy(deleteTmp, deleteVal)
-			deleteValues = append(deleteValues, deleteTmp)
-			//fmt.Println(deleteValues)
+			deleteValues = append(deleteValues, sliceToInt(&deleteTmp))
+
 		}
+		fmt.Println((deleteValues))
+		//fmt.Println(deleteValues)
 		for _, val := range deleteValues {
-			//fmt.Println(val)
-			delete(deleterMap, sliceToInt(&val))
+			// _, ok := deleterMap[val]
+			// fmt.Println(ok)
+			delete(deleterMap, val)
 			//fmt.Println(deleterMap, len(deleterMap))
 		}
-
+		//fmt.Println(deleteValues)
 	}
 	//fmt.Println("After deleting from the map, down to", len(deleterMap))
 
@@ -175,7 +182,7 @@ func RemoveRotations(input *[][]int) *[][]int {
 		//keys = append(keys, value)
 		keys = append(keys, deleterMap[k])
 	}
-
+	//fmt.Println(len(keys))
 	return &keys
 }
 
@@ -285,16 +292,16 @@ const BoardSize = 9
 const Print = true
 
 func main() {
-	rotationValues := []int{0, 1, 2, 3}
-	rotations := RepeatingPermutations(rotationValues, BoardSize)
-	if Print {
-		if len(rotations) < 1000 {
-			fmt.Println(rotations, len(rotations))
-		} else {
-			fmt.Println(len(rotations))
-			fmt.Println(rotations[len(rotations)-5:])
-		}
-	}
+	// rotationValues := []int{0, 1, 2, 3}
+	// rotations := RepeatingPermutations(rotationValues, BoardSize)
+	// if Print {
+	// 	if len(rotations) < 1000 {
+	// 		fmt.Println(rotations, len(rotations))
+	// 	} else {
+	// 		fmt.Println(len(rotations))
+	// 		fmt.Println(rotations[len(rotations)-5:])
+	// 	}
+	// }
 	boardValues := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	//boardValues := []int{1, 2, 3, 4}
 	boards := Permutations(boardValues)
@@ -307,28 +314,38 @@ func main() {
 		}
 	}
 
-	basePath, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-	//fmt.Println(basePath)
-	err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), &boards)
-	if err != nil {
-		log.Println(err)
-	}
+	// basePath, err := os.Getwd()
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+	// //fmt.Println(basePath)
+	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), &boards)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+	original := sliceToInt(&(boards[0]))
+	fmt.Println(original)
+	rotated := rotateBoard(boards[0])
+	fmt.Println(sliceToInt(&rotated))
+	rotated1 := rotateBoard(rotated)
+	fmt.Println(sliceToInt(&rotated1))
+	rotated2 := rotateBoard(rotated1)
+	fmt.Println(sliceToInt(&rotated2))
 
-	boards = *RemoveRotations(&boards)
-	if Print {
-		if len(boards) < 1000 {
-			fmt.Println(boards, len(boards))
-		} else {
-			fmt.Println(len(boards))
-			fmt.Println((boards)[len(boards)-5:])
-		}
-	}
+	//fmt.Println(original, sliceToInt(&rotated), sliceToInt(&rotated1), sliceToInt(&rotated2))
+	fmt.Println("All done now")
+	// boards = *RemoveRotations(&boards)
+	// if Print {
+	// 	if len(boards) < 1000 {
+	// 		fmt.Println(boards, len(boards))
+	// 	} else {
+	// 		fmt.Println(len(boards))
+	// 		fmt.Println((boards)[len(boards)-5:])
+	// 	}
+	// }
 
-	err = WriteBoards(path.Join(basePath, "/cmd/drillespil/clean_boards.txt"), &boards)
-	if err != nil {
-		log.Println(err)
-	}
+	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/clean_boards.txt"), &boards)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 }
