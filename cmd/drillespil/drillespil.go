@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"os"
+	"path"
 	"sort"
 )
 
@@ -222,16 +224,13 @@ func RotateBoard(board *[]int, rotations int) *[]int {
 func RemoveRotations(input *[][]int) *[][]int {
 	// Create a map and populate
 	deleterMap := sliceToMap(input)
-	//fmt.Println(len(deleterMap), deleterMap)
 
 	//Idea - generate rotations and add to slice, then go to a separate loop to delete them?
 	// Create and rotate boards, then delete them
 
-	//for _, val := range deleterMap {
 	map_keys := sortedKeys(deleterMap)
 	for _, k := range *map_keys {
 		var deleteValues []int
-		//fmt.Println(len(map_keys))
 
 		for i := 1; i < 4; i++ {
 			val := (*deleterMap)[k]
@@ -241,28 +240,16 @@ func RemoveRotations(input *[][]int) *[][]int {
 			deleteValues = append(deleteValues, sliceToInt(&deleteTmp))
 
 		}
-		fmt.Println((deleteValues))
-		//fmt.Println(deleteValues)
 		for _, val := range deleteValues {
-			// _, ok := deleterMap[val]
-			// fmt.Println(ok)
 			delete(*deleterMap, val)
-			//fmt.Println(deleterMap, len(deleterMap))
 		}
-		//fmt.Println(deleteValues)
 	}
-	//fmt.Println("After deleting from the map, down to", len(deleterMap))
-
-	//fmt.Println(deleterMap, len(deleterMap))
 	// Finally, return to slice of slices
 	map_keys = sortedKeys(deleterMap)
 	keys := [][]int{}
 	for _, k := range *map_keys {
-		//for _, value := range deleterMap {
-		//keys = append(keys, value)
 		keys = append(keys, (*deleterMap)[k])
 	}
-	//fmt.Println(len(keys))
 	return &keys
 }
 
@@ -284,16 +271,16 @@ const BoardSize = 9
 const Print = true
 
 func main() {
-	// rotationValues := []int{0, 1, 2, 3}
-	// rotations := RepeatingPermutations(rotationValues, BoardSize)
-	// if Print {
-	// 	if len(rotations) < 1000 {
-	// 		fmt.Println(rotations, len(rotations))
-	// 	} else {
-	// 		fmt.Println(len(rotations))
-	// 		fmt.Println(rotations[len(rotations)-5:])
-	// 	}
-	// }
+	rotationValues := []int{0, 1, 2, 3}
+	rotations := RepeatingPermutations(&rotationValues, BoardSize)
+	if Print {
+		if len(*rotations) < 1000 {
+			fmt.Println(rotations, len(*rotations))
+		} else {
+			fmt.Println(len(*rotations))
+			fmt.Println((*rotations)[len(*rotations)-5:])
+		}
+	}
 	boardValues := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	//boardValues := []int{1, 2, 3, 4}
 	boards := Permutations(boardValues)
@@ -306,38 +293,30 @@ func main() {
 		}
 	}
 
-	// basePath, err := os.Getwd()
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	// //fmt.Println(basePath)
-	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), &boards)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	original := sliceToInt(&(*boards)[0])
-	fmt.Println(original)
-	rotated := rotateBoard(&(*boards)[0])
-	fmt.Println(sliceToInt(rotated))
-	rotated1 := rotateBoard(rotated)
-	fmt.Println(sliceToInt(rotated1))
-	rotated2 := rotateBoard(rotated1)
-	fmt.Println(sliceToInt(rotated2))
+	basePath, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	//fmt.Println(basePath)
+	err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), boards)
+	if err != nil {
+		log.Println(err)
+	}
 
-	//fmt.Println(original, sliceToInt(&rotated), sliceToInt(&rotated1), sliceToInt(&rotated2))
+	boards = RemoveRotations(boards)
+	if Print {
+		if len(*boards) < 1000 {
+			fmt.Println(boards, len(*boards))
+		} else {
+			fmt.Println(len(*boards))
+			fmt.Println((*boards)[len(*boards)-5:])
+		}
+	}
+
+	err = WriteBoards(path.Join(basePath, "/cmd/drillespil/clean_boards.txt"), boards)
+	if err != nil {
+		log.Println(err)
+	}
+
 	fmt.Println("All done now")
-	// boards = *RemoveRotations(&boards)
-	// if Print {
-	// 	if len(boards) < 1000 {
-	// 		fmt.Println(boards, len(boards))
-	// 	} else {
-	// 		fmt.Println(len(boards))
-	// 		fmt.Println((boards)[len(boards)-5:])
-	// 	}
-	// }
-
-	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/clean_boards.txt"), &boards)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
 }
