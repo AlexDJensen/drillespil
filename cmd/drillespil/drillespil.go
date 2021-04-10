@@ -20,17 +20,17 @@ Taken from here:
 https://play.golang.org/p/ZfTy6C-lApN
 https://www.reddit.com/r/golang/comments/ls3fz0/how_to_generate_all_patterns_for_number/gorvkf1/
 */
-func nextProduct(values []int, length int) func() []int {
+func nextProduct(values *[]int, length int) func() *[]int {
 	p := make([]int, length)
 	x := make([]int, length)
-	return func() []int {
+	return func() *[]int {
 		p := p[:len(x)]
 		for i, xi := range x {
-			p[i] = values[xi]
+			p[i] = (*values)[xi]
 		}
 		for i := len(x) - 1; i >= 0; i-- {
 			x[i]++
-			if x[i] < len(values) {
+			if x[i] < len(*values) {
 				break
 			}
 			x[i] = 0
@@ -39,37 +39,37 @@ func nextProduct(values []int, length int) func() []int {
 				break
 			}
 		}
-		return p
+		return &p
 	}
 }
 
 /*
 RepeatingPermutations creates a list of lists, each list being a permutation.
 */
-func RepeatingPermutations(values []int, length int) (permuts [][]int) {
+func RepeatingPermutations(values *[]int, length int) *[][]int {
 	np := nextProduct(values, length)
-	permuts = make([][]int, 0)
+	permuts := make([][]int, 0)
 
 	for {
 		product := np()
 
-		if len(product) == 0 {
+		if len(*product) == 0 {
 			break
 		}
 		c := make([]int, BoardSize)
-		copy(c, product)
+		copy(c, *product)
 		permuts = append(permuts, c)
 
 	}
-	return permuts
+	return &permuts
 }
 
 /*
 Permutations takes a length argument and outputs a list of all integer Permutations (non-repeating)
 */
-func Permutations(input []int) (result [][]int) {
+func Permutations(input []int) *[][]int {
 	var helper func([]int, int)
-	result = [][]int{}
+	result := [][]int{}
 
 	helper = func(arr []int, n int) {
 		if n == 1 {
@@ -92,7 +92,7 @@ func Permutations(input []int) (result [][]int) {
 		}
 	}
 	helper(input, len(input))
-	return result
+	return &result
 }
 
 // EqualSlices takes two int slices and compares them for equality
@@ -118,23 +118,103 @@ func sliceToInt(s *[]int) int {
 	return res
 }
 
-func sortedKeys(m map[int][]int) []int {
-	keys := make([]int, len(m))
+func sortedKeys(m *map[int][]int) *[]int {
+	keys := make([]int, len(*m))
 	i := 0
-	for k := range m {
+	for k := range *m {
 		keys[i] = k
 		i++
 	}
 	sort.Ints(keys)
-	return keys
+	return &keys
 }
 
-func sliceToMap(input *[][]int) map[int][]int {
+func sliceToMap(input *[][]int) *map[int][]int {
 	deleterMap := make(map[int][]int, 0)
 	for idx := range *input {
 		deleterMap[sliceToInt(&(*input)[idx])] = (*input)[idx]
 	}
-	return deleterMap
+	return &deleterMap
+}
+
+func chunkSlice(slice *[]int, chunkSize int) *[][]int {
+	var chunks [][]int
+	for i := 0; i < len(*slice); i += chunkSize {
+		end := i + chunkSize
+
+		// necessary check to avoid slicing beyond
+		// slice capacity
+		if end > len(*slice) {
+			end = len(*slice)
+		}
+
+		chunks = append(chunks, (*slice)[i:end])
+	}
+
+	return &chunks
+}
+
+func unchunkSlice(chunks *[][]int) *[]int {
+	ret := make([]int, 0)
+
+	for _, elements := range *chunks {
+		for _, v := range elements {
+			ret = append(ret, v)
+		}
+	}
+
+	return &ret
+}
+
+func rotateBoard(board *[]int) *[]int {
+	// Adapted from the python solution above
+	// https://stackoverflow.com/questions/42519/how-do-you-rotate-a-two-dimensional-array/35438327#35438327
+
+	rotatedBoard := make([]int, 0)
+
+	size := int(math.Floor(math.Sqrt(float64(len(*board)))))
+	//Rotating layers below
+	layerCount := size / 2
+
+	splitBoard := chunkSlice(board, size)
+
+	for i := 0; i < layerCount; i++ {
+		first := i
+		last := size - first - 1
+
+		for j := first; j < last; j++ {
+			offset := j - first
+
+			top := (*splitBoard)[first][j]
+			rightSide := (*splitBoard)[j][last]
+			bottom := (*splitBoard)[last][last-offset]
+			leftSide := (*splitBoard)[last-offset][first]
+
+			(*splitBoard)[first][j] = leftSide
+			(*splitBoard)[j][last] = top
+			(*splitBoard)[last][last-offset] = rightSide
+			(*splitBoard)[last-offset][first] = bottom
+
+		}
+	}
+
+	rotatedBoard = *unchunkSlice(splitBoard)
+
+	return &rotatedBoard
+}
+
+// RotateBoard is a utility function - it iteratively calls rotateBoard to get correct rotation
+func RotateBoard(board *[]int, rotations int) *[]int {
+
+	if rotations == 0 {
+		return board
+	}
+
+	for i := 0; i < rotations; i++ {
+		board = rotateBoard(board)
+	}
+
+	return board
 }
 
 // RemoveRotations converts input slice pointer to a map,
@@ -149,15 +229,15 @@ func RemoveRotations(input *[][]int) *[][]int {
 
 	//for _, val := range deleterMap {
 	map_keys := sortedKeys(deleterMap)
-	for _, k := range map_keys {
+	for _, k := range *map_keys {
 		var deleteValues []int
 		//fmt.Println(len(map_keys))
 
 		for i := 1; i < 4; i++ {
-			val := (deleterMap)[k]
-			deleteVal := RotateBoard(val, i)
+			val := (*deleterMap)[k]
+			deleteVal := RotateBoard(&val, i)
 			deleteTmp := make([]int, BoardSize)
-			copy(deleteTmp, deleteVal)
+			copy(deleteTmp, *deleteVal)
 			deleteValues = append(deleteValues, sliceToInt(&deleteTmp))
 
 		}
@@ -166,7 +246,7 @@ func RemoveRotations(input *[][]int) *[][]int {
 		for _, val := range deleteValues {
 			// _, ok := deleterMap[val]
 			// fmt.Println(ok)
-			delete(deleterMap, val)
+			delete(*deleterMap, val)
 			//fmt.Println(deleterMap, len(deleterMap))
 		}
 		//fmt.Println(deleteValues)
@@ -177,101 +257,13 @@ func RemoveRotations(input *[][]int) *[][]int {
 	// Finally, return to slice of slices
 	map_keys = sortedKeys(deleterMap)
 	keys := [][]int{}
-	for _, k := range map_keys {
+	for _, k := range *map_keys {
 		//for _, value := range deleterMap {
 		//keys = append(keys, value)
-		keys = append(keys, deleterMap[k])
+		keys = append(keys, (*deleterMap)[k])
 	}
 	//fmt.Println(len(keys))
 	return &keys
-}
-
-// Rethink:
-// for any given board, generate the tree rotations.
-// Then, go from either beginning (special case), or from last known position.
-// Remove the three offending rotations (or reach the end).
-// If you reach the end, you need to ignore what you get back and start from next iteration.
-// How about a map?
-// Trying a map
-
-func chunkSlice(slice []int, chunkSize int) [][]int {
-	var chunks [][]int
-	for i := 0; i < len(slice); i += chunkSize {
-		end := i + chunkSize
-
-		// necessary check to avoid slicing beyond
-		// slice capacity
-		if end > len(slice) {
-			end = len(slice)
-		}
-
-		chunks = append(chunks, slice[i:end])
-	}
-
-	return chunks
-}
-
-func unchunkSlice(chunks [][]int) []int {
-	ret := make([]int, 0)
-
-	for _, elements := range chunks {
-		for _, v := range elements {
-			ret = append(ret, v)
-		}
-	}
-
-	return ret
-}
-
-// RotateBoard is a utility function - it iteratively calls rotateBoard to get correct rotation
-func RotateBoard(board []int, rotations int) []int {
-
-	if rotations == 0 {
-		return board
-	}
-
-	for i := 0; i < rotations; i++ {
-		board = rotateBoard(board)
-	}
-
-	return board
-}
-
-func rotateBoard(board []int) []int {
-	// Adapted from the python solution above
-	// https://stackoverflow.com/questions/42519/how-do-you-rotate-a-two-dimensional-array/35438327#35438327
-
-	rotatedBoard := make([]int, 0)
-
-	size := int(math.Floor(math.Sqrt(float64(len(board)))))
-	//Rotating layers below
-	layerCount := size / 2
-
-	splitBoard := chunkSlice(board, size)
-
-	for i := 0; i < layerCount; i++ {
-		first := i
-		last := size - first - 1
-
-		for j := first; j < last; j++ {
-			offset := j - first
-
-			top := splitBoard[first][j]
-			rightSide := splitBoard[j][last]
-			bottom := splitBoard[last][last-offset]
-			leftSide := splitBoard[last-offset][first]
-
-			splitBoard[first][j] = leftSide
-			splitBoard[j][last] = top
-			splitBoard[last][last-offset] = rightSide
-			splitBoard[last-offset][first] = bottom
-
-		}
-	}
-
-	rotatedBoard = unchunkSlice(splitBoard)
-
-	return rotatedBoard
 }
 
 func WriteBoards(filePath string, values *[][]int) error {
@@ -306,11 +298,11 @@ func main() {
 	//boardValues := []int{1, 2, 3, 4}
 	boards := Permutations(boardValues)
 	if Print {
-		if len(boards) < 1000 {
-			fmt.Println(boards, len(boards))
+		if len(*boards) < 1000 {
+			fmt.Println(boards, len(*boards))
 		} else {
-			fmt.Println(len(boards))
-			fmt.Println(boards[len(boards)-5:])
+			fmt.Println(len(*boards))
+			fmt.Println((*boards)[len(*boards)-5:])
 		}
 	}
 
@@ -323,14 +315,14 @@ func main() {
 	// if err != nil {
 	// 	log.Println(err)
 	// }
-	original := sliceToInt(&(boards[0]))
+	original := sliceToInt(&(*boards)[0])
 	fmt.Println(original)
-	rotated := rotateBoard(boards[0])
-	fmt.Println(sliceToInt(&rotated))
+	rotated := rotateBoard(&(*boards)[0])
+	fmt.Println(sliceToInt(rotated))
 	rotated1 := rotateBoard(rotated)
-	fmt.Println(sliceToInt(&rotated1))
+	fmt.Println(sliceToInt(rotated1))
 	rotated2 := rotateBoard(rotated1)
-	fmt.Println(sliceToInt(&rotated2))
+	fmt.Println(sliceToInt(rotated2))
 
 	//fmt.Println(original, sliceToInt(&rotated), sliceToInt(&rotated1), sliceToInt(&rotated2))
 	fmt.Println("All done now")
