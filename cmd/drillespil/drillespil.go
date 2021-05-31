@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"path"
 	"sort"
 )
 
@@ -181,13 +180,6 @@ func rotateBoard(board []int) []int {
 	// fmt.Printf("splitBoard pre rotate: %v \n", splitBoard)
 	//fmt.Println(splitBoard)
 
-	// Reverse the matrix
-	for i, j := 0, size-1; i < j; i, j = i+1, j-1 {
-		(*splitBoard)[i], (*splitBoard)[j] = (*splitBoard)[j], (*splitBoard)[i]
-	}
-
-	// fmt.Printf("after reverse %v \n", splitBoard)
-
 	// Transpose it, i.e. turn columns to rows
 	for i := 0; i < size; i++ {
 		for j := 0; j < i; j++ {
@@ -195,11 +187,12 @@ func rotateBoard(board []int) []int {
 		}
 	}
 
-	//fmt.Println(splitBoard)
-	// fmt.Printf("splitBoard after rotate: %v \n", splitBoard)
+	// Reverse the matrix
+	for i, j := 0, size-1; i < j; i, j = i+1, j-1 {
+		(*splitBoard)[i], (*splitBoard)[j] = (*splitBoard)[j], (*splitBoard)[i]
+	}
+
 	rotatedBoard = *unchunkSlice(splitBoard)
-	// fmt.Printf("Output of rotateBoard: %v \n", rotatedBoard)
-	//fmt.Println(rotatedBoard)
 
 	return rotatedBoard
 }
@@ -232,22 +225,16 @@ func RemoveRotations(input *[][]int) *[][]int {
 	map_keys := sortedKeys(deleterMap)
 	for _, k := range *map_keys {
 		var deleteValues []int
-		//fmt.Println((*deleterMap)[k])
+
 		val := (*deleterMap)[k]
-		fmt.Printf("Starting loop with value %v \n", val)
 		for i := 1; i < 4; i++ {
-			fmt.Println(i)
-			fmt.Println(val)
 			deleteVal := RotateBoard(&val, i)
 
-			// fmt.Println(deleteVal)
 			deleteTmp := make([]int, BoardSize)
 			copy(deleteTmp, *deleteVal)
 			deleteValues = append(deleteValues, sliceToInt(&deleteTmp))
 
 		}
-
-		fmt.Println(deleteValues)
 
 		// Remove the rotations
 		for _, val := range deleteValues {
@@ -304,43 +291,19 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Println(len(*boards))
+	fmt.Println("Length of raw boards is", len(*boards))
 	//fmt.Println(basePath)
-	err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), boards)
-	if err != nil {
-		log.Println(err)
-	}
-
-	// raw := (*boards)[0]
-	// raw_int := sliceToInt(&raw)
-	// boards = RemoveRotations(boards)
-	// fmt.Println("Raw was:", raw_int)
-	// fmt.Println("How rotating stuff")
-	// rot0 := RotateBoard(&raw, 0)
-
-	// rot1 := RotateBoard(&raw, 1)
-
-	// rot2 := RotateBoard(&raw, 2)
-
-	// rot3 := RotateBoard(&raw, 3)
-
-	// fmt.Println("Now print stuff")
-	// fmt.Println("rot0", sliceToInt(rot0))
-	// fmt.Println("rot1", sliceToInt(rot1))
-	// fmt.Println("rot2", sliceToInt(rot2))
-	// fmt.Println("rot3", sliceToInt(rot3))
-	// fmt.Println(*rot0)
-	// fmt.Println(*rot1)
-	// fmt.Println(*rot2)
-	// fmt.Println(*rot3)
-	// PrintList(boards)
-	// fmt.Println(len(*boards))
+	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), boards)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 
 	boards = RemoveRotations(boards)
-	err = WriteBoards(path.Join(basePath, "/cmd/drillespil/clean_boards.txt"), boards)
-	if err != nil {
-		log.Println(err)
-	}
+	fmt.Println("Length of cleaned boards is", len(*boards))
+	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/clean_boards.txt"), boards)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 
 	fmt.Println("All done now")
 }
