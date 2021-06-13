@@ -1,17 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"sort"
+	"strconv"
 )
-
-var colours = map[int]string{
-	1: "Blue-Top",
-	2: "Blue-Bottom",
-}
 
 /*
 nextProduct takes a list of integers, and a length argument, and returns a generative function.
@@ -131,7 +127,7 @@ func sortedKeys(m *map[int][]int) *[]int {
 }
 
 func sliceToMap(input *[][]int) *map[int][]int {
-	deleterMap := make(map[int][]int, 0)
+	deleterMap := make(map[int][]int)
 	for idx := range *input {
 		deleterMap[sliceToInt(&(*input)[idx])] = (*input)[idx]
 	}
@@ -159,9 +155,7 @@ func unchunkSlice(chunks *[][]int) *[]int {
 	ret := make([]int, 0)
 
 	for _, elements := range *chunks {
-		for _, v := range elements {
-			ret = append(ret, v)
-		}
+		ret = append(ret, elements...)
 	}
 
 	return &ret
@@ -170,9 +164,6 @@ func unchunkSlice(chunks *[][]int) *[]int {
 func rotateBoard(board []int) []int {
 	// Adapted from the python solution above
 	// https://stackoverflow.com/questions/42519/how-do-you-rotate-a-two-dimensional-array/35438327#35438327
-
-	rotatedBoard := make([]int, 0)
-	// fmt.Printf("rotateBoard input: %v \n", &board)
 
 	size := int(math.Floor(math.Sqrt(float64(len(board)))))
 
@@ -192,9 +183,8 @@ func rotateBoard(board []int) []int {
 		(*splitBoard)[i], (*splitBoard)[j] = (*splitBoard)[j], (*splitBoard)[i]
 	}
 
-	rotatedBoard = *unchunkSlice(splitBoard)
+	return *unchunkSlice(splitBoard)
 
-	return rotatedBoard
 }
 
 // RotateBoard is a utility function - it iteratively calls rotateBoard to get correct rotation
@@ -274,6 +264,212 @@ func PrintList(obj *[][]int) {
 	}
 }
 
+/*
+Token is a single token and the four colour-half pairs it contains.
+*/
+type Token struct {
+	north int
+	east  int
+	south int
+	west  int
+}
+
+// var colours = map[int]string{
+// 	1: "Red shoes",
+// 	2: "Purple shoes",
+// 	3: "Orange shoes",
+// 	4: "Green shoes",
+// 	5: "Pink jacket",
+// 	6: "White jacket",
+// 	7: "Yellow jacket",
+// 	8: "Blue jacket",
+// }
+
+var tokens = map[int]Token{
+	1: {7, 5, 3, 1},
+	2: {7, 3, 2, 8},
+	3: {5, 2, 3, 6},
+	4: {3, 8, 5, 4},
+	5: {5, 3, 1, 7},
+	6: {4, 2, 6, 8},
+	7: {4, 1, 5, 6},
+	8: {6, 8, 2, 4},
+	9: {1, 6, 5, 4},
+}
+
+/*
+Board is the controlling structure in this game - it places tokens and compares edges
+*/
+type Board struct {
+	p1 Token
+	p2 Token
+	p3 Token
+	p4 Token
+	p5 Token
+	p6 Token
+	p7 Token
+	p8 Token
+	p9 Token
+}
+
+type edges struct {
+	p1e int
+	p1s int
+	p2e int
+	p2s int
+	p2w int
+	p3s int
+	p3w int
+	p4n int
+	p4e int
+	p4s int
+	p5n int
+	p5e int
+	p5s int
+	p5w int
+	p6n int
+	p6s int
+	p6w int
+	p7n int
+	p7e int
+	p8n int
+	p8e int
+	p8w int
+	p9n int
+	p9w int
+}
+
+/*
+edgeFinder takes in a board, and returns a structure of the edges that exist on a given board.
+The board is expected to consist of rotated tokens
+*/
+func edgeFinder(b *Board) (e *edges) {
+	e.p1e = b.p1.east
+	e.p1s = b.p1.south
+	e.p2e = b.p2.east
+	e.p2s = b.p2.south
+	e.p2w = b.p2.west
+	e.p3s = b.p3.south
+	e.p3w = b.p3.west
+	e.p4n = b.p4.north
+	e.p4e = b.p4.east
+	e.p4s = b.p4.south
+	e.p5n = b.p5.north
+	e.p5e = b.p5.east
+	e.p5s = b.p5.south
+	e.p5w = b.p5.west
+	e.p6n = b.p6.north
+	e.p6s = b.p6.south
+	e.p6w = b.p6.west
+	e.p7n = b.p7.north
+	e.p7e = b.p7.east
+	e.p8n = b.p8.north
+	e.p8e = b.p8.east
+	e.p8w = b.p8.west
+	e.p9n = b.p9.north
+	e.p9w = b.p9.west
+	return e
+}
+
+type edgePair struct {
+	e1 int
+	e2 int
+}
+
+func edgePairs(e *edges) (p []edgePair) {
+	p1 := edgePair{e.p1e, e.p2w}
+	p2 := edgePair{e.p1s, e.p4n}
+	p3 := edgePair{e.p2e, e.p3w}
+	p4 := edgePair{e.p2s, e.p5n}
+	p5 := edgePair{e.p3s, e.p6n}
+	p6 := edgePair{e.p4e, e.p5w}
+	p7 := edgePair{e.p4s, e.p7n}
+	p8 := edgePair{e.p6w, e.p5e}
+	p9 := edgePair{e.p6s, e.p9n}
+	p10 := edgePair{e.p7e, e.p8e}
+	p11 := edgePair{e.p8n, e.p5s}
+	p12 := edgePair{e.p8e, e.p9w}
+	p = append(p, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12)
+	return p
+}
+
+// Match checks if edgepair is valid, returns bool
+func Match(e *edgePair) bool {
+	return e.e1 == e.e2
+}
+
+// BoardChecker checks if a board contains a valid solution and returns a boolean
+func BoardChecker(b *Board) bool {
+	edges := edgeFinder(b)
+	pairs := edgePairs(edges)
+	for _, pair := range pairs {
+		res := Match(&pair)
+		if res {
+			continue
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+/*
+Rotate takes a token and an optional rotation,
+and returns the corresponding colour-half pair in the board-edges for that rotation.
+Rotation is number of clockwise turns off 0 (meaning 0 is token north = board north)
+*/
+func Rotate(t Token, rotation int) (r Token, err error) {
+	switch rotation {
+	case 0:
+		r = t
+		err = nil
+	case 1:
+		r.north = t.west
+		r.east = t.north
+		r.south = t.east
+		r.west = t.south
+		err = nil
+	case 2:
+		r.north = t.south
+		r.east = t.west
+		r.south = t.north
+		r.west = t.east
+		err = nil
+	case 3:
+		r.north = t.east
+		r.east = t.south
+		r.south = t.west
+		r.west = t.north
+		err = nil
+	default:
+		newRotation := rotation % 4
+		r, err = Rotate(t, newRotation)
+		fmt.Println(err)
+		errorMessage := ("Rotation argument is too high (" +
+			strconv.Itoa(rotation) +
+			"), running with " +
+			strconv.Itoa(newRotation) +
+			" instead")
+		err = errors.New(errorMessage)
+	}
+
+	return r, err
+}
+
+// TODO:
+// Create board (with rotation), setup actual flow
+
+func BoardMaker(order []int, rotation []int) *Board {
+	hold := make([]Token, 0)
+
+	for i := range order {
+		t := tokens[i]
+		t, _ = Rotate(t, rotation[i])
+		hold = append(hold, t)
+	}
+	return &Board{hold[0], hold[1], hold[2], hold[3], hold[4], hold[5], hold[6], hold[7], hold[0]}
+}
+
 //Set to 3 for now during testing, should be 9
 const BoardSize = 9
 const Print = false
@@ -287,10 +483,10 @@ func main() {
 	boards := Permutations(boardValues)
 	PrintList(boards)
 
-	basePath, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
+	//basePath, err := os.Getwd()
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 	fmt.Println("Length of raw boards is", len(*boards))
 	//fmt.Println(basePath)
 	// err = WriteBoards(path.Join(basePath, "/cmd/drillespil/boards.txt"), boards)
