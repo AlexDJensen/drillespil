@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"sort"
@@ -399,18 +400,18 @@ func Match(e *edgePair) bool {
 }
 
 // BoardChecker checks if a board contains a valid solution and returns a boolean
-func BoardChecker(b *Board) bool {
-	edges := edgeFinder(b)
+func BoardChecker(b <-chan *Board, valid chan<- *Board) {
+	//var board *Board
+	board := <-b
+	edges := edgeFinder(board)
 	pairs := edgePairs(edges)
 	for _, pair := range pairs {
 		res := Match(&pair)
 		if res {
-			continue
-		} else {
-			return false
+			valid <- board
 		}
 	}
-	return true
+
 }
 
 /*
@@ -456,18 +457,36 @@ func Rotate(t Token, rotation int) (r Token, err error) {
 	return r, err
 }
 
-// TODO:
-// Create board (with rotation), setup actual flow
-
-func BoardMaker(order []int, rotation []int) *Board {
+func BoardMaker(orders *[][]int, rotations *[][]int, c chan<- *Board) {
 	hold := make([]Token, 0)
 
-	for i := range order {
-		t := tokens[i]
-		t, _ = Rotate(t, rotation[i])
-		hold = append(hold, t)
+	for _, order := range *orders {
+		for _, rotation := range *rotations {
+			for i := range order {
+
+				t := tokens[i]
+				t, _ = Rotate(t, rotation[i])
+				hold = append(hold, t)
+			}
+			c <- &Board{hold[0], hold[1], hold[2], hold[3], hold[4], hold[5], hold[6], hold[7], hold[8]}
+		}
+
 	}
-	return &Board{hold[0], hold[1], hold[2], hold[3], hold[4], hold[5], hold[6], hold[7], hold[0]}
+
+}
+
+func SolutionWriter(c <-chan *Board) {
+	f, err := os.OpenFile("./solutions.txt", os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := f.Write([]byte("appended some data\n")); err != nil {
+		f.Close() // ignore error; Write error takes precedence
+		log.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 //Set to 3 for now during testing, should be 9
@@ -501,5 +520,12 @@ func main() {
 	// 	log.Println(err)
 	// }
 
-	fmt.Println("All done now")
+	fmt.Println("Prep work done")
+	//Boards := make([]*Board, 0)
+	BoardChannel := make(chan *Board)
+	vals := make(chan *Board)
+
+	go BoardMaker(boards, rotations, BoardChannel)
+	go BoardChecker(BoardChannel, vals)
+
 }
