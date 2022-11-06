@@ -457,7 +457,7 @@ func CreateAndCheckBoards(orders [][]int, rotations [][]int) {
 	//valids := make([]Board, 0)
 	start_time := time.Now()
 	for i := 0; i < len(orders); i++ {
-		if i%100 == 0 {
+		if i%1000 == 0 {
 			fmt.Printf("Currently at order iteration %d, after %v time \n", i, time.Since(start_time))
 		}
 		for j := 0; j < len(rotations); j++ {
@@ -471,7 +471,7 @@ func CreateAndCheckBoards(orders [][]int, rotations [][]int) {
 				//then remove all orders with the same start.
 				if res {
 					fmt.Printf("Valid solution found: %v\n", board)
-					//valids = append(valids, board)
+					fmt.Printf("Order: %v ------ Rotation:%v \n", order, rotation)
 				}
 			}(order, rotation)
 
