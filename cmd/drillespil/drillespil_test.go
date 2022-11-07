@@ -1,7 +1,6 @@
 package main
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -12,6 +11,8 @@ var layouts [][]int = Permutations(boardValues)
 var board_layouts [][]int = RemoveRotations((layouts))
 var rotations [][]int = RepeatingPermutations(&rotationValues, length)
 var testBoards []Board = MakeBoardsLimited(board_layouts, rotations, 100000)
+var known_good_board = []int{1, 4, 9, 6, 2, 5, 7, 8, 3}
+var known_good_rotat = []int{3, 0, 1, 1, 2, 3, 1, 3, 3}
 
 func TestPermutations(t *testing.T) {
 	permuts := Permutations(boardValues)
@@ -91,19 +92,31 @@ func BenchmarkCheckBoard(b *testing.B) {
 	}
 }
 
-func TestObjectSizes(t *testing.T) {
-	board := MakeBoard(board_layouts[0], rotations[0])
+func TestKnownSolutions(t *testing.T) {
+	t.Log(known_good_board)
+	t.Log(known_good_rotat)
+	board := MakeBoard(known_good_board, known_good_rotat)
 	t.Log(board)
-	t.Logf("A single board has size %d", reflect.TypeOf(board).Size())
+	for idx, piece := range known_good_board {
+		t.Logf("Position %v - Token %v before rotating %v times: %v \n", idx+1, piece, known_good_rotat[idx], tokens[piece])
+		rotated, _ := Rotate(tokens[piece], known_good_rotat[idx])
+		t.Logf("Position %v - Token %v after rotating %v times: %v \n", idx+1, piece, known_good_rotat[idx], rotated)
+		t.Log("----------------")
+	}
+	res := CheckBoard(&board)
+	edges := edgeFinder(&board)
+	pairs := edgePairs(edges)
+	t.Log(pairs)
+	for idx, pair := range pairs {
+		t.Log("----------------")
+		t.Logf("Pair %v is numbers %v\n", idx, pair)
+		t.Logf("Colours are: %v %v \n", designs[pair.e1], designs[pair.e2])
+	}
+	t.Logf("Result of good solution is %v\n", res)
 
-}
-
-func TestLimitedBoards(t *testing.T) {
-	param := 10000
-	boards := MakeBoardsLimited(board_layouts, rotations, param)
-	if len(boards) != param {
-		t.Errorf("List of boards is size %d, want %d", len(boards), param)
+	if !res {
+		t.Error("Failed to deal with known good solution")
 	} else {
-		t.Logf("List of boards is size %d, want %d", len(boards), param)
+		t.Log("Accepted known good solution")
 	}
 }

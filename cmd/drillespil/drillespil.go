@@ -21,7 +21,20 @@ type Token struct {
 	west  uint8
 }
 
+var designs = map[uint8]string{
+	1: "blue_bottom",
+	2: "pink_bottom",
+	3: "orange_boots",
+	4: "green_boots",
+	5: "yellow_top",
+	6: "white_top",
+	7: "pink_top",
+	8: "blue_top",
+}
+
 var tokens = map[int]Token{
+	//  It goes
+	//  n, e, s, w
 	1: {5, 7, 3, 1},
 	2: {5, 3, 2, 8},
 	3: {7, 2, 3, 6},
@@ -123,7 +136,7 @@ func edgePairs(e *edges) []edgePair {
 	p7 := edgePair{e.p4s, e.p7n}
 	p8 := edgePair{e.p6w, e.p5e}
 	p9 := edgePair{e.p6s, e.p9n}
-	p10 := edgePair{e.p7e, e.p8e}
+	p10 := edgePair{e.p7e, e.p8w}
 	p11 := edgePair{e.p8n, e.p5s}
 	p12 := edgePair{e.p8e, e.p9w}
 	return []edgePair{p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12}
@@ -363,10 +376,10 @@ func Rotate(t Token, rotation int) (r Token, err error) {
 		r = t
 		err = nil
 	case 1:
-		r.north = t.west
-		r.east = t.north
-		r.south = t.east
-		r.west = t.south
+		r.north = t.east
+		r.east = t.south
+		r.south = t.west
+		r.west = t.north
 		err = nil
 	case 2:
 		r.north = t.south
@@ -375,10 +388,10 @@ func Rotate(t Token, rotation int) (r Token, err error) {
 		r.west = t.east
 		err = nil
 	case 3:
-		r.north = t.east
-		r.east = t.south
-		r.south = t.west
-		r.west = t.north
+		r.north = t.west
+		r.east = t.north
+		r.south = t.east
+		r.west = t.south
 		err = nil
 	default:
 		newRotation := rotation % 4
@@ -397,11 +410,12 @@ func Rotate(t Token, rotation int) (r Token, err error) {
 
 func MakeBoard(order []int, rotation []int) Board {
 	hold := make([]Token, 0)
-	for i := range order {
-		t := tokens[i]
-		t, _ = Rotate(t, rotation[i])
+	for idx, val := range order {
+		t := tokens[val]
+		t, _ = Rotate(t, rotation[idx])
 		hold = append(hold, t)
 	}
+
 	return Board{hold[0], hold[1], hold[2], hold[3], hold[4], hold[5], hold[6], hold[7], hold[8]}
 }
 
@@ -440,17 +454,6 @@ func CheckBoard(board *Board) bool {
 		}
 	}
 	return true
-}
-
-func CheckBoardCompletely(board *Board) []bool {
-	edges := edgeFinder(board)
-	pairs := edgePairs(edges)
-	matches := make([]bool, 0)
-	for _, pair := range pairs {
-		valid := Match(&pair)
-		matches = append(matches, valid)
-	}
-	return matches
 }
 
 func CreateAndCheckBoards(orders [][]int, rotations [][]int) {
