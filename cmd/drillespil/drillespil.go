@@ -11,6 +11,9 @@ import (
 
 const BoardSize = 9
 
+//var known_good_board = []int{1, 4, 9, 6, 2, 5, 7, 8, 3}
+//var known_good_rotat = []int{3, 0, 1, 1, 2, 3, 1, 3, 3}
+
 /*
 Token is a single token and the four colour-half pairs it contains.
 */
@@ -50,15 +53,17 @@ var tokens = map[int]Token{
 Board is the controlling structure in this game - it places tokens and compares edges
 */
 type Board struct {
-	p1 Token
-	p2 Token
-	p3 Token
-	p4 Token
-	p5 Token
-	p6 Token
-	p7 Token
-	p8 Token
-	p9 Token
+	p1          Token
+	p2          Token
+	p3          Token
+	p4          Token
+	p5          Token
+	p6          Token
+	p7          Token
+	p8          Token
+	p9          Token
+	og_order    []int
+	og_rotation []int
 }
 
 type edges struct {
@@ -416,7 +421,7 @@ func MakeBoard(order []int, rotation []int) Board {
 		hold = append(hold, t)
 	}
 
-	return Board{hold[0], hold[1], hold[2], hold[3], hold[4], hold[5], hold[6], hold[7], hold[8]}
+	return Board{hold[0], hold[1], hold[2], hold[3], hold[4], hold[5], hold[6], hold[7], hold[8], order, rotation}
 }
 
 func MakeBoards(orders [][]int, rotations [][]int) []Board {
@@ -456,8 +461,39 @@ func CheckBoard(board *Board) bool {
 	return true
 }
 
+func printBoard(b Board) {
+	for _, keyword := range []string{"Order", "Rotation"} {
+		fmt.Println(keyword)
+		switch keyword {
+		case "Order":
+			rows := chunkSlice(b.og_order, 3)
+			for _, row := range rows {
+				fmt.Printf("%v\n", row)
+			}
+		case "Rotation":
+			rows := chunkSlice(b.og_rotation, 3)
+			for _, row := range rows {
+				fmt.Printf("%v\n", row)
+			}
+		}
+
+	}
+}
+
+func makeAndCheckBoard(order []int, rotation []int, ch chan Board) {
+	board := MakeBoard(order, rotation)
+	//fmt.Println(board)
+	res := CheckBoard(&board)
+	// Create a method to remove redundant elements from orders
+	// If for instance the check fails at the first edge,
+	//then remove all orders with the same start.
+	if res {
+		ch <- board
+	}
+}
+
 func CreateAndCheckBoards(orders [][]int, rotations [][]int) {
-	//valids := make([]Board, 0)
+	valids := make(chan Board, 100)
 	start_time := time.Now()
 	for i := 0; i < len(orders); i++ {
 		if i%1000 == 0 {
@@ -466,20 +502,15 @@ func CreateAndCheckBoards(orders [][]int, rotations [][]int) {
 		for j := 0; j < len(rotations); j++ {
 			order := orders[i]
 			rotation := rotations[j]
-			go func([]int, []int) {
-				board := MakeBoard(order, rotation)
-				res := CheckBoard(&board)
-				// Create a method to remove redundant elements from orders
-				// If for instance the check fails at the first edge,
-				//then remove all orders with the same start.
-				if res {
-					fmt.Printf("Valid solution found: %v\n", board)
-					fmt.Printf("Order: %v ------ Rotation:%v \n", order, rotation)
-				}
-			}(order, rotation)
-
+			go makeAndCheckBoard(order, rotation, valids)
 		}
 
+	}
+	fmt.Printf("Length of valids is %v\n", len(valids))
+	time.Sleep(2 * time.Second)
+	close(valids)
+	for elem := range valids {
+		printBoard(elem)
 	}
 	//return valids
 }
@@ -491,19 +522,21 @@ func CreateAndCheckBoards(orders [][]int, rotations [][]int) {
 func main() {
 	rotationValues := []int{0, 1, 2, 3}
 	rotations := RepeatingPermutations(&rotationValues, BoardSize)
-
 	boardValues := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-
+	// rotations[0] = known_good_rotat
+	// rotations = rotations[0:1]
 	boards := Permutations(boardValues)
 
 	boards = RemoveRotations(boards)
+	//boards[0] = known_good_board
+	//boards = boards[0:1]
 	fmt.Println("Prep work done")
 	fmt.Printf("Size of boards: %d\n", len(boards))
 	fmt.Printf("Size of rotations: %d\n", len(rotations))
 	fmt.Printf("Total objects to process: %d\n", len(rotations)*len(boards))
 
 	CreateAndCheckBoards(boards, rotations)
-
 	//fmt.Printf("Valid boards are: %v\n", valids)
+	// time.Sleep(time.Second * 5)
 
 }

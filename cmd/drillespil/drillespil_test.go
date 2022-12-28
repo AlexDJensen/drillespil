@@ -11,6 +11,7 @@ var layouts [][]int = Permutations(boardValues)
 var board_layouts [][]int = RemoveRotations((layouts))
 var rotations [][]int = RepeatingPermutations(&rotationValues, length)
 var testBoards []Board = MakeBoardsLimited(board_layouts, rotations, 100000)
+
 var known_good_board = []int{1, 4, 9, 6, 2, 5, 7, 8, 3}
 var known_good_rotat = []int{3, 0, 1, 1, 2, 3, 1, 3, 3}
 
@@ -119,4 +120,19 @@ func TestKnownSolutions(t *testing.T) {
 	} else {
 		t.Log("Accepted known good solution")
 	}
+}
+
+func TestCreateAndCheckBoards(t *testing.T) {
+	var orders = make([][]int, 0)
+	var rotations = make([][]int, 0)
+	orders = append(orders, known_good_board)
+	rotations = append(rotations, known_good_rotat)
+
+	CreateAndCheckBoards(orders, rotations)
+
+	b := MakeBoard(orders[0], rotations[0])
+	t.Log(b)
+	e := edgeFinder(&b)
+	ep := edgePairs(e)
+	t.Log(ep)
 }
