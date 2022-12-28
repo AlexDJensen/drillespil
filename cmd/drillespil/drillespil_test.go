@@ -100,8 +100,10 @@ func TestKnownSolutions(t *testing.T) {
 	t.Log(board)
 	for idx, piece := range known_good_board {
 		t.Logf("Position %v - Token %v before rotating %v times: %v \n", idx+1, piece, known_good_rotat[idx], tokens[piece])
+		t.Logf("In actuality %v \n", tokenToText(tokens[piece]))
 		rotated, _ := Rotate(tokens[piece], known_good_rotat[idx])
 		t.Logf("Position %v - Token %v after rotating %v times: %v \n", idx+1, piece, known_good_rotat[idx], rotated)
+		t.Logf("In actuality %v \n", tokenToText(rotated))
 		t.Log("----------------")
 	}
 	res := CheckBoard(&board)
